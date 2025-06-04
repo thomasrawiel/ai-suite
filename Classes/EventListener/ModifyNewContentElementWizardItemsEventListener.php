@@ -81,18 +81,48 @@ final class ModifyNewContentElementWizardItemsEventListener
         $commonEntries = [];
         $aiSuiteEntries = [];
         $otherEntries = [];
-
+        $otherGroups = [];
+        
         foreach ($wizardItems as $key => $value) {
-            if (str_starts_with($key, 'common')) {
+            $isCommon = str_starts_with($key, 'common');
+            $isAiSuite = str_starts_with($key, 'aisuite');
+            $isOther = !$isCommon && !$isAiSuite;
+
+            if ($isCommon) {
                 $commonEntries[$key] = $value;
-            } elseif (str_starts_with($key, 'aisuite')) {
-                $aiSuiteEntries[$key] = $value;
+            } elseif ($isOther) {
+                // a content element always has a title, a group has a header but never a title
+                if (isset($value['header']) || !isset($value['title'])) {
+                    $otherGroups[$key] = $value;
+                } else {
+                    $otherEntries[$key] = $value;
+                }
             } else {
-                $otherEntries[$key] = $value;
+                $aiSuiteEntries[$key] = $value;
+            }
+        }
+        
+        $filteredOtherEntries = [];
+        foreach($otherGroups as $groupKey => $group) {
+            $children = [];
+
+            $prefix = $groupKey . '_';
+            $prefixLength = strlen($prefix);
+
+            foreach ($otherEntries as $elementKey => $element) {
+                if (strncmp($elementKey, $prefix, $prefixLength) === 0) {
+                    $children[$elementKey] = $element;
+                }
+            }
+
+            // Only add the group if it has children
+            if ($children) {
+                $filteredOtherEntries[$groupKey] = $group;
+                $filteredOtherEntries += $children;
             }
         }
 
-        $sortedWizardItems = $commonEntries + $aiSuiteEntries + $otherEntries;
+        $sortedWizardItems = $commonEntries + $filteredOtherEntries + $aiSuiteEntries;
         $event->setWizardItems($sortedWizardItems);
     }
 }

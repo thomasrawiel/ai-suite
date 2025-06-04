@@ -78,6 +78,7 @@ return function (ContainerConfigurator $configurator, ContainerBuilder $containe
         ->tag('event.listener', [
             'method' => '__invoke',
             'event' => 'TYPO3\\CMS\\Backend\\Controller\\Event\\ModifyNewContentElementWizardItemsEvent',
+            'after' => 'contentdefenderModifyNewContentElementWizardEventListener,tx-container-new-content-element-wizard',
         ]);
 
     $services->set(\AutoDudes\AiSuite\EventListener\AfterTcaCompilationEventListener::class)
